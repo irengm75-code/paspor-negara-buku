@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buku Paspor CRUD</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f6f9;
+      padding: 30px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #1f4e79;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input, select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #1f4e79;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .btn-save {
+      background: #1f8b4c;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #166837;
+    }
+
+    .btn-reset {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-reset:hover {
+      background: #4d5459;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    thead {
+      background: #1f4e79;
+      color: white;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+
+    .btn-edit {
+      background: #f0ad4e;
+      color: white;
+      margin-right: 5px;
+    }
+
+    .btn-delete {
+      background: #d9534f;
+      color: white;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+    }
+
+    @media (max-width: 768px) {
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📘 Buku Data Paspor</h1>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nomor Paspor</label>
+        <input type="text" id="passportNumber" placeholder="Contoh: A1234567" />
+      </div>
+
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="fullName" placeholder="Masukkan nama lengkap" />
+      </div>
+
+      <div class="form-group">
+        <label>Kewarganegaraan</label>
+        <input type="text" id="nationality" placeholder="Indonesia" />
+      </div>
+
+      <div class="form-group">
+        <label>Tanggal Lahir</label>
+        <input type="date" id="birthDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Tanggal Kadaluarsa</label>
+        <input type="date" id="expiryDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <select id="gender">
+          <option value="">Pilih</option>
+          <option value="Laki-laki">Laki-laki</option>
+          <option value="Perempuan">Perempuan</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-save" onclick="saveData()">💾 Simpan</button>
+      <button class="btn-reset" onclick="resetForm()">🔄 Reset</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nomor Paspor</th>
+          <th>Nama</th>
+          <th>Kewarganegaraan</th>
+          <th>Tgl Lahir</th>
+          <th>Kadaluarsa</th>
+          <th>Gender</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="passportTable">
+        <tr>
+          <td colspan="8" class="empty">Belum ada data paspor</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let passports = JSON.parse(localStorage.getItem('passports')) || [];
+    let editIndex = -1;
+
+    function renderTable() {
+      const table = document.getElementById('passportTable');
+
+      if (passports.length === 0) {
+        table.innerHTML = `
+          <tr>
+            <td colspan="8" class="empty">Belum ada data paspor</td>
+          </tr>
+        `;
+        return;
+      }
+
+      table.innerHTML = '';
+
+      passports.forEach((item, index) => {
+        table.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.passportNumber}</td>
+            <td>${item.fullName}</td>
+            <td>${item.nationality}</td>
+            <td>${item.birthDate}</td>
+            <td>${item.expiryDate}</td>
+            <td>${item.gender}</td>
+            <td>
+              <button class="btn-edit" onclick="editData(${index})">✏ Edit</button>
+              <button class="btn-delete" onclick="deleteData(${index})">🗑 Hapus</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function saveData() {
+      const passportNumber = document.getElementById('passportNumber').value;
+      const fullName = document.getElementById('fullName').value;
+      const nationality = document.getElementById('nationality').value;
+      const birthDate = document.getElementById('birthDate').value;
+      const expiryDate = document.getElementById('expiryDate').value;
+      const gender = document.getElementById('gender').value;
+
+      if (!passportNumber || !fullName || !nationality || !birthDate || !expiryDate || !gender) {
+        alert('Semua data wajib diisi!');
+        return;
+      }
+
+      const data = {
+        passportNumber,
+        fullName,
+        nationality,
+        birthDate,
+        expiryDate,
+        gender
+      };
+
+      if (editIndex === -1) {
+        passports.push(data);
+      } else {
+        passports[editIndex] = data;
+        editIndex = -1;
+      }
+
+      localStorage.setItem('passports', JSON.stringify(passports));
+      renderTable();
+      resetForm();
+    }
+
+    function editData(index) {
+      const data = passports[index];
+
+      document.getElementById('passportNumber').value = data.passportNumber;
+      document.getElementById('fullName').value = data.fullName;
+      document.getElementById('nationality').value = data.nationality;
+      document.getElementById('birthDate').value = data.birthDate;
+      document.getElementById('expiryDate').value = data.expiryDate;
+      document.getElementById('gender').value = data.gender;
+
+      editIndex = index;
+    }
+
+    function deleteData(index) {
+      if (confirm('Yakin ingin menghapus data ini?')) {
+        passports.splice(index, 1);
+        localStorage.setItem('passports', JSON.stringify(passports));
+        renderTable();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('passportNumber').value = '';
+      document.getElementById('fullName').value = '';
+      document.getElementById('nationality').value = '';
+      document.getElementById('birthDate').value = '';
+      document.getElementById('expiryDate').value = '';
+      document.getElementById('gender').value = '';
+      editIndex = -1;
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
